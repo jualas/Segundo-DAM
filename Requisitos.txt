@@ -1,0 +1,125 @@
+Una vez creadas las entidades las configuramos con  las etiquetas que nos permiten definir las relaciones entre ellas.
+
+Configuramos el archivo persistence.xml para que se conecte a la base de datos
+Solamente dejamos la configuracion para hibernate y la base de datos que vamos a utilizar.
+No añadimos la configuracion para que se muestren las consultas en consola.
+
+- En el caso de quere ver las consultas en consola, añadimos la siguiente etiqueta:
+Para que se muestren las consultas SQL que Hibernate está realizando en la base de datos, puedes añadir la siguiente propiedad en tu archivo `persistence.xml`:
+
+```xml
+<property name="hibernate.show_sql" value="true"/>
+```
+
+Esta propiedad hace que Hibernate muestre las consultas SQL en la consola. Si quieres que las consultas se muestren de una manera más legible, puedes añadir también la siguiente propiedad:
+
+```xml
+<property name="hibernate.format_sql" value="true"/>
+```
+
+Estas propiedades se añadirían dentro del elemento `<properties>` de tu archivo `persistence.xml`.
+
+
+
+
+
+-Etiquetas añadidas a las entidades:
+
+Añadimos:
+- @Table(name = "nombre_tabla") para definir el nombre de la tabla en la base de datos.
+- @Id para definir la clave primaria.
+- @GeneratedValue(strategy = GenerationType.IDENTITY) para definir que el valor de la clave primaria se autogenera.
+- @Column(name = "nombre_columna") para definir el nombre de la columna en la base de datos.
+
+- A los campos de tipo String les asignamos las siguientes etiquetas:
+- @NotNull para definir que el campo no puede ser nulo.
+- @Size(min = 1, max = 50) para definir el tamaño del campo.
+
+- Etiquetas para relacionar las entidades:
+- @ManyToOne para definir la relación muchos a uno.
+- @JoinColumn(name = "nombre_columna") para definir el nombre de la columna en la base de datos que relaciona las entidades.
+- @OneToMany(mappedBy = "nombre_atributo") para definir la relación uno a muchos.
+
+- Creamos la clase para realiza la conexión a la base de datos. (jpa.JPAUtil) La creamos dentro de una
+carpeta llamada util (si no genera problemas al importarla en JugadorImplDao)
+
+
+1. **Organización del código**: En la propuesta, la creación del `EntityManagerFactory` y el `EntityManager` se realiza en una clase separada (`JpaUtil`).
+ Esto permite mantener el código de la lógica de la base de datos separado de la lógica de la aplicación, lo que facilita la lectura y el mantenimiento del código.
+- En el código que seleccionaste, la creación del `EntityManagerFactory` y el `EntityManager` se realiza directamente en el código, lo que puede dificultar la lectura
+  y el mantenimiento del código si se mezcla con la lógica de la aplicación.
+
+2. **Reutilización del código**: En la propuesta, la creación del `EntityManager` se realiza en un método (`getEntityManager`) que se puede llamar desde cualquier
+    parte de la aplicación. Esto permite reutilizar el código de la creación del `EntityManager` en diferentes partes de la aplicación.
+    En el código que seleccionaste, la creación del `EntityManager` se realiza directamente en el código, lo que significa que tendrías que copiar y pegar
+     este código cada vez que necesites un `EntityManager` en otra parte de la aplicación.
+
+```java
+public class JpaUtil {
+    // Declaramos una variable estática para el EntityManagerFactory.
+    // Esta es la fábrica que crea los EntityManager, que son los que nos permiten interactuar con la base de datos.
+    private static final EntityManagerFactory emFactory;
+
+    // En un bloque estático, inicializamos el EntityManagerFactory.
+    // Este bloque se ejecuta una vez cuando la clase se carga en memoria.
+    // "default" es el nombre de la unidad de persistencia que hemos definido en el archivo persistence.xml.
+    static {
+        emFactory = Persistence.createEntityManagerFactory("default");
+    }
+
+    // Este método estático nos permite obtener un EntityManager.
+    // Cada vez que necesitemos interactuar con la base de datos, podemos llamar a este método para obtener un EntityManager.
+    public static EntityManager getEntityManager() {
+        return emFactory.createEntityManager();
+    }
+
+    // Este método estático nos permite cerrar el EntityManagerFactory.
+    // Deberíamos llamar a este método cuando ya no necesitemos interactuar con la base de datos,
+    // por ejemplo, cuando nuestra aplicación se esté cerrando.
+    public static void close() {
+        emFactory.close();
+    }
+}
+```
+Este código define una clase `JpaUtil` que encapsula la creación y el cierre del `EntityManagerFactory`. Esto facilita la reutilización del código y la gestión de los recursos de la base de datos.
+
+	- Creamos una clase que nos va dar la interfaz con la que va interactuar el usuario con la aplicacion (MenuTerminal)
+
+	- Creamos la clase principal	(MainApp)
+
+
+Creamos El patron DAO
+
+Cada DAO maneja un tipo específico de entidad y proporciona métodos para crear, leer, actualizar y eliminar (CRUD) instancias de esa entidad en la base de datos.
+Esto puede ayudar a separar la lógica de la base de datos de la lógica de la aplicación, lo que es una buena práctica en el desarrollo de software.
+Además, si en el futuro decides cambiar la forma en que tu aplicación interactúa con la base de datos (por ejemplo, cambiando a una base de datos diferente
+o utilizando una API web en lugar de una base de datos directamente), solo necesitarías cambiar los DAOs, en lugar de tener que buscar y cambiar el código
+de la base de datos en toda tu aplicación.
+
+- En las clases para la interfaz declaramos los metodos que vamos a utilizar para interactuar con la base de datos.
+- En las clases para la implementacion de la interfaz declaramos los metodos donde desarrollamos la logica para interactuar con la base de datos.
+
+El manejo de excepciones en tu código actual es bastante básico. Estás capturando todas las excepciones en un bloque catch genérico y simplemente estás imprimiendo el mensaje de la excepción. Esto puede ser suficiente para un proyecto pequeño o para fines de depuración, pero en un proyecto más grande o en un entorno de producción, querrías un manejo de errores más robusto.  Aquí hay algunas sugerencias para mejorar el manejo de excepciones:
+Especificar tipos de excepción: En lugar de capturar todas las excepciones con un catch (Exception e), podrías capturar tipos específicos de excepciones. Esto te permite manejar diferentes tipos de excepciones de diferentes maneras.
+Registrar excepciones: En lugar de simplemente imprimir el mensaje de la excepción, podrías registrar la excepción utilizando un marco de registro como Log4j. Esto te permite mantener un registro de las excepciones que se producen, lo que puede ser útil para la depuración y el análisis de errores.
+Propagar excepciones: En lugar de manejar todas las excepciones en el lugar donde se producen, podrías optar por propagar las excepciones a un nivel superior donde pueden ser manejadas de manera más adecuada. Esto puede hacer que tu código sea más limpio y más fácil de entender.
+Personalizar excepciones: Podrías crear tus propias clases de excepción personalizadas. Esto te permite proporcionar más información sobre el error que ocurrió, lo que puede ser útil para la depuración y el manejo de errores.
+
+Generar el .jar
+Sí, puedes generar un archivo .jar desde IntelliJ IDEA siguiendo estos pasos:
+
+1. Ve al menú "File" y selecciona "Project Structure".
+
+2. En la ventana que se abre, selecciona "Artifacts" en el panel izquierdo.
+
+3. Haz clic en el botón "+" en la parte superior del panel derecho y selecciona "JAR" > "From modules with dependencies".
+
+4. En la ventana que se abre, selecciona el módulo y la clase principal de tu aplicación. Luego, haz clic en "OK".
+
+5. Ahora deberías ver tu nuevo artefacto JAR en la lista de artefactos. Haz clic en "OK" para cerrar la ventana de estructura del proyecto.
+
+6. Para construir el archivo JAR, ve al menú "Build" y selecciona "Build Artifacts". Luego, selecciona tu artefacto y haz clic en "Build".
+
+7. IntelliJ IDEA generará el archivo JAR en el directorio "out/artifacts" de tu proyecto.
+
+Recuerda que este archivo JAR será ejecutable siempre que tu aplicación tenga un método `main` que actúe como punto de entrada.
